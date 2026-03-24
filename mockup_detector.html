@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DetectorFraude · Tecno Shop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    :root {
+      --bg:        #f0f2f8;
+      --white:     #ffffff;
+      --sidebar:   #0f1623;
+      --sidebar2:  #171f30;
+      --primary:   #2563eb;
+      --primary-h: #1d4ed8;
+      --primary-l: #eff6ff;
+      --success:   #059669;
+      --danger:    #dc2626;
+      --warn:      #d97706;
+      --border:    #e2e8f0;
+      --text:      #0f172a;
+      --muted:     #64748b;
+      --light:     #f8fafc;
+      --card-sh:   0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --r:         12px;
+      --font:      'Inter', sans-serif;
+      --font2:     'Sora', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 252px; min-height: 100vh;
+      background: var(--sidebar);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sb-brand {
+      padding: 26px 20px 22px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .sb-logo {
+      width: 38px; height: 38px;
+      background: var(--primary); border-radius: 9px;
+      display: grid; place-items: center; flex-shrink: 0;
+      color: #fff;
+    }
+    .sb-logo svg { width: 20px; height: 20px; }
+    .sb-name {
+      font-family: var(--font2); font-size: 15px; font-weight: 700; color: #fff;
+    }
+    .sb-name span { color: #60a5fa; }
+    .sb-tagline { font-size: 11px; color: rgba(255,255,255,.3); margin-top: 1px; }
+
+    .sb-section { padding: 18px 12px 6px; }
+    .sb-section-label {
+      font-size: 10px; font-weight: 600;
+      color: rgba(255,255,255,.22);
+      letter-spacing: 1.2px; text-transform: uppercase;
+      padding: 0 8px; margin-bottom: 4px;
+    }
+    .sb-link {
+      display: flex; align-items: center; gap: 11px;
+      padding: 9px 10px; border-radius: 8px;
+      color: rgba(255,255,255,.5); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all .16s; margin-bottom: 1px;
+      position: relative; user-select: none;
+    }
+    .sb-link:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.88); }
+    .sb-link.active { background: rgba(37,99,235,.22); color: #fff; }
+    .sb-link.active::before {
+      content: ''; position: absolute;
+      left: 0; top: 6px; bottom: 6px;
+      width: 3px; background: var(--primary); border-radius: 0 2px 2px 0;
+    }
+    .sb-icon {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: grid; place-items: center; flex-shrink: 0;
+      background: rgba(255,255,255,.05); transition: background .16s;
+      color: currentColor;
+    }
+    .sb-icon svg { width: 15px; height: 15px; }
+    .sb-link.active .sb-icon { background: rgba(37,99,235,.35); }
+    .sb-link:hover .sb-icon { background: rgba(255,255,255,.08); }
+    .sb-badge {
+      margin-left: auto; font-size: 10px; font-weight: 700;
+      background: var(--primary); color: #fff;
+      padding: 2px 7px; border-radius: 10px; line-height: 1.6;
+    }
+    .sb-footer {
+      margin-top: auto; padding: 14px 12px;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+    .sb-user {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 8px; cursor: pointer;
+      transition: background .16s;
+    }
+    .sb-user:hover { background: rgba(255,255,255,.05); }
+    .sb-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: grid; place-items: center;
+      font-size: 13px; color: #fff; font-weight: 700; flex-shrink: 0;
+    }
+    .sb-user-name { font-size: 12.5px; font-weight: 600; color: #fff; }
+    .sb-user-role { font-size: 11px; color: rgba(255,255,255,.32); }
+
+    /* ── Main ── */
+    .main { margin-left: 252px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      padding: 0 30px; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-left h1 { font-size: 15px; font-weight: 600; color: var(--text); }
+    .topbar-left p  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .tb-live {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 13px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      border: 1px solid var(--border); color: var(--muted);
+    }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; animation: blink 2s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── Content ── */
+    .content { padding: 26px 30px; flex: 1; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Btn ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; transition: all .16s;
+      font-family: var(--font); text-decoration: none;
+    }
+    .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.22); }
+    .btn-primary:hover { background: var(--primary-h); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-l); }
+    .btn-sm { padding: 6px 13px; font-size: 12px; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── Card ── */
+    .card { background: var(--white); border-radius: var(--r); box-shadow: var(--card-sh); border: 1px solid var(--border); }
+    .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card-header h2 { font-size: 14px; font-weight: 600; color: var(--text); }
+    .card-body { padding: 20px; }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 22px; }
+    .stat-card {
+      background: var(--white); border-radius: var(--r);
+      padding: 18px 20px; border: 1px solid var(--border); box-shadow: var(--card-sh);
+    }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .stat-label { font-size: 12px; font-weight: 500; color: var(--muted); }
+    .stat-icon { width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; }
+    .stat-icon svg { width: 17px; height: 17px; }
+    .stat-val { font-family: var(--font2); font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 5px; }
+    .stat-sub { font-size: 11px; color: var(--muted); }
+    .st-up   { color: var(--success); font-weight: 600; }
+    .st-dn   { color: var(--danger);  font-weight: 600; }
+    .ic-blue  { background: #eff6ff; color: #2563eb; }
+    .ic-green { background: #f0fdf4; color: #059669; }
+    .ic-red   { background: #fef2f2; color: #dc2626; }
+    .ic-amber { background: #fffbeb; color: #d97706; }
+
+    /* ── Grid helpers ── */
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+    .three-col { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 22px; }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { padding: 9px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; background: var(--light); border-bottom: 1px solid var(--border); }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--light); }
+
+    /* ── Pill ── */
+    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .pill-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .p-green { background: #f0fdf4; color: var(--success); }
+    .p-red   { background: #fef2f2; color: var(--danger); }
+    .p-amber { background: #fffbeb; color: var(--warn); }
+    .p-blue  { background: #eff6ff; color: var(--primary); }
+
+    /* ── Donut chart ── */
+    .donut-wrap { display: flex; align-items: center; gap: 22px; }
+    .donut-legend { display: flex; flex-direction: column; gap: 10px; }
+    .leg-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text); }
+    .leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── Feed ── */
+    .feed-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-ico { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; }
+    .feed-ico svg { width: 15px; height: 15px; }
+    .feed-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+    .feed-meta  { font-size: 11px; color: var(--muted); }
+    .feed-time  { font-size: 11px; color: var(--muted); white-space: nowrap; margin-left: auto; }
+
+    /* ── Upload ── */
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: var(--r);
+      padding: 52px 24px; text-align: center; cursor: pointer;
+      transition: all .2s; background: var(--light);
+    }
+    .drop-zone:hover, .drop-zone.over { border-color: var(--primary); background: var(--primary-l); }
+    .drop-zone input { display: none; }
+    .drop-circle {
+      width: 68px; height: 68px; border-radius: 50%;
+      background: var(--primary-l); display: grid; place-items: center;
+      margin: 0 auto 16px; color: var(--primary); transition: transform .2s;
+    }
+    .drop-circle svg { width: 28px; height: 28px; }
+    .drop-zone:hover .drop-circle { transform: scale(1.07); }
+    .drop-zone h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+    .drop-zone p  { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .fmt-pills { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+    .fmt-pill { padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--white); border: 1px solid var(--border); color: var(--muted); }
+
+    /* ── Preview card meta ── */
+    .meta-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-lbl { color: var(--muted); font-weight: 500; }
+    .meta-val { font-weight: 600; color: var(--text); }
+    .prev-img-box { border-radius: 9px; border: 1px solid var(--border); overflow: hidden; background: var(--light); aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .prev-img-box img { width: 100%; height: 100%; object-fit: contain; }
+
+    /* ── Progress ── */
+    .prog-track { height: 5px; background: var(--border); border-radius: 5px; overflow: hidden; margin: 8px 0 16px; }
+    .prog-fill  { height: 100%; background: var(--primary); border-radius: 5px; width: 0%; transition: width .4s ease; }
+    .ps { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); padding: 5px 0; }
+    .ps.active { color: var(--primary); font-weight: 500; }
+    .ps.done   { color: var(--success); font-weight: 500; }
+    .ps-ico { width: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ps-ico svg { width: 14px; height: 14px; }
+    .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #bfdbfe; border-top-color: var(--primary); border-radius: 50%; animation: rot .7s linear infinite; }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* ── Verdict ── */
+    .verdict { border-radius: 10px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+    .verdict.v-ok      { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+    .verdict.v-fraud   { background: #fef2f2; border: 1.5px solid #fecaca; }
+    .verdict.v-suspect { background: #fffbeb; border: 1.5px solid #fde68a; }
+    .v-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+    .v-ico svg { width: 22px; height: 22px; }
+    .v-ok    .v-ico { background: #dcfce7; color: var(--success); }
+    .v-fraud .v-ico { background: #fee2e2; color: var(--danger); }
+    .v-suspect .v-ico { background: #fef9c3; color: var(--warn); }
+    .v-info h3 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .v-ok    .v-info h3 { color: var(--success); }
+    .v-fraud .v-info h3 { color: var(--danger); }
+    .v-suspect .v-info h3 { color: var(--warn); }
+    .v-info p { font-size: 12px; color: var(--muted); }
+    .v-conf { margin-left: auto; text-align: center; flex-shrink: 0; }
+    .v-conf-num { font-family: var(--font2); font-size: 28px; font-weight: 700; }
+    .v-ok      .v-conf-num { color: var(--success); }
+    .v-fraud   .v-conf-num { color: var(--danger); }
+    .v-suspect .v-conf-num { color: var(--warn); }
+    .v-conf-lbl { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: .8px; text-transform: uppercase; }
+
+    /* ── Indicators ── */
+    .ind-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+    .ind { background: var(--light); border: 1px solid var(--border); border-radius: 9px; padding: 11px 13px; display: flex; align-items: center; gap: 10px; }
+    .ind.ok   { border-left: 3px solid var(--success); }
+    .ind.fail { border-left: 3px solid var(--danger); }
+    .ind.warn { border-left: 3px solid var(--warn); }
+    .ind-ico { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; flex-shrink: 0; }
+    .ind-ico svg { width: 14px; height: 14px; }
+    .ok   .ind-ico { background: #dcfce7; color: var(--success); }
+    .fail .ind-ico { background: #fee2e2; color: var(--danger); }
+    .warn .ind-ico { background: #fef9c3; color: var(--warn); }
+    .ind-lbl { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .ind-val { font-size: 12px; font-weight: 700; }
+    .ok   .ind-val { color: var(--success); }
+    .fail .ind-val { color: var(--danger); }
+    .warn .ind-val { color: var(--warn); }
+
+    /* ── OCR ── */
+    .ocr-box { background: var(--light); border: 1px solid var(--border); border-radius: 9px; overflow: hidden; margin-bottom: 16px; }
+    .ocr-head { padding: 9px 14px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .ocr-head span { font-size: 12px; font-weight: 600; color: var(--text); }
+    .ocr-body { padding: 13px 14px; font-size: 12px; font-family: 'Courier New', monospace; line-height: 2; max-height: 140px; overflow-y: auto; color: var(--text); }
+    .hl-r { background: #fee2e2; color: var(--danger); padding: 0 3px; border-radius: 3px; font-weight: 700; }
+    .hl-g { background: #dcfce7; color: var(--success); padding: 0 3px; border-radius: 3px; font-weight: 700; }
+
+    /* ── Settings ── */
+    .form-section { margin-bottom: 24px; }
+    .form-section h3 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 14px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .form-group input, .form-group select { padding: 8px 11px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; font-family: var(--font); color: var(--text); background: var(--white); outline: none; transition: border-color .16s; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.08); }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-info h4 { font-size: 13px; font-weight: 600; color: var(--text); }
+    .toggle-info p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .toggle { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
+    .toggle input { display: none; }
+    .t-track { position: absolute; inset: 0; background: var(--border); border-radius: 11px; cursor: pointer; transition: background .2s; }
+    .toggle input:checked + .t-track { background: var(--primary); }
+    .t-thumb { position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; background: #fff; border-radius: 50%; transition: transform .2s; pointer-events: none; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .toggle input:checked ~ .t-thumb { transform: translateX(17px); }
+
+    /* ── Confusion matrix ── */
+    .cm-table td { text-align: center; }
+    .cm-cell { display: inline-block; min-width: 48px; padding: 5px 12px; border-radius: 6px; font-weight: 700; font-size: 13px; }
+
+    /* ── Animations ── */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeUp .28s ease forwards; }
+
+    @media(max-width:960px) {
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .two-col, .three-col { grid-template-columns: 1fr; }
+      .ind-grid { grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo"><i data-lucide="shield-check"></i></div>
+    <div>
+      <div class="sb-name">Detector<span>Fraude</span></div>
+      <div class="sb-tagline">Tecno Shop</div>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Principal</div>
+    <div class="sb-link active" onclick="nav('dashboard',this)">
+      <span class="sb-icon"><i data-lucide="layout-dashboard"></i></span> Panel de control
+    </div>
+    <div class="sb-link" onclick="nav('analisis',this)">
+      <span class="sb-icon"><i data-lucide="scan-search"></i></span> Analizar comprobante
+    </div>
+    <div class="sb-link" onclick="nav('historial',this)">
+      <span class="sb-icon"><i data-lucide="clock-3"></i></span> Historial
+      <span class="sb-badge">12</span>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Reportes</div>
+    <div class="sb-link" onclick="nav('reportes',this)">
+      <span class="sb-icon"><i data-lucide="bar-chart-2"></i></span> Métricas y reportes
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Sistema</div>
+    <div class="sb-link" onclick="nav('configuracion',this)">
+      <span class="sb-icon"><i data-lucide="settings-2"></i></span> Configuración
+    </div>
+    <div class="sb-link" onclick="nav('acerca',this)">
+      <span class="sb-icon"><i data-lucide="info"></i></span> Acerca del sistema
+    </div>
+  </div>
+
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar">A</div>
+      <div>
+        <div class="sb-user-name">Administrador</div>
+        <div class="sb-user-role">Tecno Shop · 2026</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 id="page-title">Panel de control</h1>
+      <p id="page-sub">Resumen general del sistema</p>
+    </div>
+    <div class="topbar-right">
+      <div class="tb-live"><span class="live-dot"></span> Sistema activo</div>
+      <button class="btn btn-primary btn-sm" onclick="nav('analisis', document.querySelectorAll('.sb-link')[1])">
+        <i data-lucide="plus"></i> Nuevo análisis
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Total analizados</span>
+            <div class="stat-icon ic-blue"><i data-lucide="file-text"></i></div>
+          </div>
+          <div class="stat-val">127</div>
+          <div class="stat-sub"><span class="st-up">↑ 18%</span> este mes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Comprobantes válidos</span>
+            <div class="stat-icon ic-green"><i data-lucide="check-circle-2"></i></div>
+          </div>
+          <div class="stat-val">98</div>
+          <div class="stat-sub"><span class="st-up">77.2%</span> del total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Fraudulentos</span>
+            <div class="stat-icon ic-red"><i data-lucide="x-circle"></i></div>
+          </div>
+          <div class="stat-val">21</div>
+          <div class="stat-sub"><span class="st-dn">16.5%</span> del total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Sospechosos</span>
+            <div class="stat-icon ic-amber"><i data-lucide="alert-triangle"></i></div>
+          </div>
+          <div class="stat-val">8</div>
+          <div class="stat-sub"><span class="st-dn">6.3%</span> del total</div>
+        </div>
+      </div>
+
+      <div class="three-col">
+        <div class="card">
+          <div class="card-header">
+            <h2>Análisis recientes</h2>
+            <button class="btn btn-ghost btn-sm" onclick="nav('historial', document.querySelectorAll('.sb-link')[2])">Ver todos</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Archivo</th><th>Fecha</th><th>Resultado</th><th>Confianza</th></tr></thead>
+                <tbody>
+                  <tr><td>comprobante_001.png</td><td>24 mar 2026</td><td><span class="pill p-red"><span class="pill-dot"></span>Fraudulento</span></td><td>91%</td></tr>
+                  <tr><td>recibo_marzo_22.jpg</td><td>22 mar 2026</td><td><span class="pill p-green"><span class="pill-dot"></span>Válido</span></td><td>96%</td></tr>
+                  <tr><td>pago_transferencia.png</td><td>20 mar 2026</td><td><span class="pill p-amber"><span class="pill-dot"></span>Sospechoso</span></td><td>74%</td></tr>
+                  <tr><td>transferencia_18.jpg</td><td>18 mar 2026</td><td><span class="pill p-green"><span class="pill-dot"></span>Válido</span></td><td>98%</td></tr>
+                  <tr><td>comprobante_pse.png</td><td>16 mar 2026</td><td><span class="pill p-red"><span class="pill-dot"></span>Fraudulento</span></td><td>88%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2>Distribución</h2></div>
+          <div class="card-body">
+            <div class="donut-wrap">
+              <svg width="108" height="108" viewBox="0 0 108 108">
+                <circle cx="54" cy="54" r="38" fill="none" stroke="#f1f5f9" stroke-width="17"/>
+                <circle cx="54" cy="54" r="38" fill="none" stroke="#059669" stroke-width="17" stroke-dasharray="183.8 238.8" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 54 54)"/>
+                <circle cx="54" cy="54" r="38" fill="none" stroke="#dc2626" stroke-width="17" stroke-dasharray="39.4 238.8" stroke-dashoffset="-183.8" stroke-linecap="round" transform="rotate(-90 54 54)"/>
+                <circle cx="54" cy="54" r="38" fill="none" stroke="#d97706" stroke-width="17" stroke-dasharray="15.6 238.8" stroke-dashoffset="-223.2" stroke-linecap="round" transform="rotate(-90 54 54)"/>
+                <text x="54" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#0f172a" font-family="Sora,sans-serif">127</text>
+                <text x="54" y="63" text-anchor="middle" font-size="9" fill="#64748b" font-family="Inter,sans-serif">análisis</text>
+              </svg>
+              <div class="donut-legend">
+                <div class="leg-item"><div class="leg-dot" style="background:#059669"></div>Válidos (77%)</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#dc2626"></div>Fraudulentos (17%)</div>
+                <div class="leg-item"><div class="leg-dot" style="background:#d97706"></div>Sospechosos (6%)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Actividad reciente</h2></div>
+        <div class="card-body" style="padding:8px 20px">
+          <div class="feed-item">
+            <div class="feed-ico" style="background:#fee2e2;color:#dc2626"><i data-lucide="x-circle"></i></div>
+            <div>
+              <div class="feed-title">Comprobante fraudulento · <strong>comprobante_001.png</strong></div>
+              <div class="feed-meta">NIT inválido · Entidad no reconocida · Valor inconsistente</div>
+            </div>
+            <div class="feed-time">Hace 2h</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-ico" style="background:#dcfce7;color:#059669"><i data-lucide="check-circle-2"></i></div>
+            <div>
+              <div class="feed-title">Comprobante verificado · <strong>recibo_marzo_22.jpg</strong></div>
+              <div class="feed-meta">Todos los campos válidos · Confianza 96%</div>
+            </div>
+            <div class="feed-time">Hace 4h</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-ico" style="background:#fef9c3;color:#d97706"><i data-lucide="alert-triangle"></i></div>
+            <div>
+              <div class="feed-title">Comprobante sospechoso · <strong>pago_transferencia.png</strong></div>
+              <div class="feed-meta">Nombre emisor incompleto · Requiere revisión manual</div>
+            </div>
+            <div class="feed-time">Hace 1d</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-ico" style="background:#eff6ff;color:#2563eb"><i data-lucide="settings-2"></i></div>
+            <div>
+              <div class="feed-title">Reglas de validación actualizadas</div>
+              <div class="feed-meta">Umbral de fraude ajustado a 0.75 · Lista de entidades actualizada</div>
+            </div>
+            <div class="feed-time">Hace 2d</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ANÁLISIS ═══ -->
+    <div class="page" id="page-analisis">
+      <div class="two-col" style="align-items:start">
+
+        <div class="card" id="upload-card">
+          <div class="card-header"><h2>Cargar comprobante</h2></div>
+          <div class="card-body">
+            <div class="drop-zone" id="drop-zone">
+              <input type="file" id="file-input" accept="image/jpeg,image/png"/>
+              <div class="drop-circle"><i data-lucide="upload-cloud"></i></div>
+              <h3>Arrastra el comprobante aquí</h3>
+              <p>o selecciona el archivo desde tu dispositivo</p>
+              <label for="file-input" class="btn btn-primary"><i data-lucide="folder-open"></i> Seleccionar archivo</label>
+              <div class="fmt-pills">
+                <span class="fmt-pill">JPG</span>
+                <span class="fmt-pill">PNG</span>
+                <span class="fmt-pill">Máx. 5 MB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="preview-card" style="display:none">
+          <div class="card-header">
+            <h2>Vista previa</h2>
+            <span class="pill p-blue"><span class="pill-dot"></span>Listo para analizar</span>
+          </div>
+          <div class="card-body">
+            <div class="prev-img-box"><img id="prev-img" src="" alt="preview"/></div>
+            <div style="margin-bottom:16px">
+              <div class="meta-row"><span class="meta-lbl">Archivo</span><span class="meta-val" id="fi-name">—</span></div>
+              <div class="meta-row"><span class="meta-lbl">Tamaño</span><span class="meta-val" id="fi-size">—</span></div>
+              <div class="meta-row"><span class="meta-lbl">Formato</span><span class="meta-val" id="fi-type">—</span></div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary" style="flex:1" id="btn-analyze" onclick="runAnalysis()"><i data-lucide="scan-search"></i> Analizar</button>
+              <button class="btn btn-ghost" onclick="resetUpload()"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="progress-card" style="display:none">
+          <div class="card-header"><h2>Procesando comprobante</h2></div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+              <span id="prog-lbl" style="color:var(--muted);font-weight:500">Iniciando...</span>
+              <span id="prog-pct" style="font-weight:700;color:var(--primary)">0%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div class="ps" id="ps1"><span class="ps-ico"><i data-lucide="circle"></i></span> Preprocesando imagen</div>
+              <div class="ps" id="ps2"><span class="ps-ico"><i data-lucide="circle"></i></span> Extrayendo texto con OCR</div>
+              <div class="ps" id="ps3"><span class="ps-ico"><i data-lucide="circle"></i></span> Validando campos obligatorios</div>
+              <div class="ps" id="ps4"><span class="ps-ico"><i data-lucide="circle"></i></span> Analizando patrones de texto</div>
+              <div class="ps" id="ps5"><span class="ps-ico"><i data-lucide="circle"></i></span> Clasificando comprobante</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="result-card" style="display:none">
+        <div class="card-header">
+          <h2>Resultado del análisis</h2>
+          <button class="btn btn-ghost btn-sm" onclick="resetUpload()"><i data-lucide="rotate-ccw"></i> Nuevo análisis</button>
+        </div>
+        <div class="card-body">
+          <div id="verdict-box" class="verdict v-fraud">
+            <div class="v-ico"><i data-lucide="shield-x" id="v-ico-el"></i></div>
+            <div class="v-info">
+              <h3 id="v-t">Comprobante fraudulento</h3>
+              <p id="v-d">Se detectaron múltiples anomalías que indican manipulación.</p>
+            </div>
+            <div class="v-conf">
+              <div class="v-conf-num" id="v-c">87%</div>
+              <div class="v-conf-lbl">Confianza</div>
+            </div>
+          </div>
+          <div class="ind-grid" id="ind-grid"></div>
+          <div class="ocr-box">
+            <div class="ocr-head">
+              <span>Texto extraído por OCR</span>
+              <span style="font-size:11px;color:var(--muted)" id="ocr-cnt">—</span>
+            </div>
+            <div class="ocr-body" id="ocr-body"></div>
+          </div>
+          <button class="btn btn-ghost" style="width:100%" onclick="resetUpload()"><i data-lucide="rotate-ccw"></i> Analizar otro comprobante</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ HISTORIAL ═══ -->
+    <div class="page" id="page-historial">
+      <div class="card">
+        <div class="card-header">
+          <h2>Historial de análisis</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <select style="padding:6px 11px;border-radius:8px;border:1px solid var(--border);font-size:12px;font-family:var(--font);color:var(--muted);outline:none;background:var(--white)">
+              <option>Todos los resultados</option>
+              <option>Válidos</option>
+              <option>Fraudulentos</option>
+              <option>Sospechosos</option>
+            </select>
+            <button class="btn btn-ghost btn-sm"><i data-lucide="download"></i> Exportar CSV</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>#</th><th>Archivo</th><th>Fecha y hora</th><th>Resultado</th><th>Confianza</th><th>Índice sospecha</th><th></th></tr>
+              </thead>
+              <tbody id="hist-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ REPORTES ═══ -->
+    <div class="page" id="page-reportes">
+      <div class="stats-grid" style="margin-bottom:22px">
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Precisión</span><div class="stat-icon ic-blue"><i data-lucide="target"></i></div></div>
+          <div class="stat-val">94.2%</div>
+          <div class="stat-sub">Sobre dataset de prueba</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Recall</span><div class="stat-icon ic-green"><i data-lucide="radar"></i></div></div>
+          <div class="stat-val">91.8%</div>
+          <div class="stat-sub">Fraudes detectados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">F1-Score</span><div class="stat-icon ic-amber"><i data-lucide="scale"></i></div></div>
+          <div class="stat-val">93.0%</div>
+          <div class="stat-sub">Media armónica P/R</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-top"><span class="stat-label">Falsos positivos</span><div class="stat-icon ic-red"><i data-lucide="alert-circle"></i></div></div>
+          <div class="stat-val">5.8%</div>
+          <div class="stat-sub">Válidos como fraude</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><h2>Matriz de confusión</h2></div>
+          <div class="card-body">
+            <table class="cm-table">
+              <thead>
+                <tr><th></th><th style="text-align:center">Pred. válido</th><th style="text-align:center">Pred. fraude</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight:600;color:var(--success)">Real válido</td>
+                  <td><span class="cm-cell" style="background:#f0fdf4;color:var(--success)">94</span></td>
+                  <td><span class="cm-cell" style="background:#fef2f2;color:var(--danger)">4</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600;color:var(--danger)">Real fraude</td>
+                  <td><span class="cm-cell" style="background:#fef2f2;color:var(--danger)">2</span></td>
+                  <td><span class="cm-cell" style="background:#f0fdf4;color:var(--success)">27</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Exportar reporte</h2></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-group"><label>Desde</label><input type="date" value="2026-03-01"/></div>
+            <div class="form-group"><label>Hasta</label><input type="date" value="2026-03-24"/></div>
+            <div class="form-group"><label>Formato</label><select><option>PDF</option><option>CSV</option></select></div>
+            <button class="btn btn-primary"><i data-lucide="download"></i> Generar reporte</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CONFIGURACIÓN ═══ -->
+    <div class="page" id="page-configuracion">
+      <div class="two-col" style="align-items:start">
+        <div class="card">
+          <div class="card-header"><h2>Umbrales de clasificación</h2></div>
+          <div class="card-body">
+            <div class="form-section">
+              <h3>Índice de sospecha</h3>
+              <div class="form-row">
+                <div class="form-group"><label>Umbral sospechoso (0–1)</label><input type="number" value="0.40" step="0.05"/></div>
+                <div class="form-group"><label>Umbral fraudulento (0–1)</label><input type="number" value="0.75" step="0.05"/></div>
+              </div>
+            </div>
+            <div class="form-section">
+              <h3>Pesos de anomalías</h3>
+              <div class="form-row">
+                <div class="form-group"><label>Entidad no reconocida</label><input type="number" value="0.35" step="0.05"/></div>
+                <div class="form-group"><label>NIT inválido</label><input type="number" value="0.30" step="0.05"/></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Valor inconsistente</label><input type="number" value="0.25" step="0.05"/></div>
+                <div class="form-group"><label>Campo ausente</label><input type="number" value="0.10" step="0.05"/></div>
+              </div>
+            </div>
+            <button class="btn btn-primary"><i data-lucide="save"></i> Guardar cambios</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Funcionalidades</h2></div>
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>Guardar historial automáticamente</h4><p>Registra cada análisis en la base de datos local</p></div>
+              <label class="toggle"><input type="checkbox" checked/><div class="t-track"></div><div class="t-thumb"></div></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>Resaltado de campos OCR</h4><p>Marca campos problemáticos en el resultado</p></div>
+              <label class="toggle"><input type="checkbox" checked/><div class="t-track"></div><div class="t-thumb"></div></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>Clasificación sospechoso</h4><p>Habilita la etiqueta intermedia entre válido y fraude</p></div>
+              <label class="toggle"><input type="checkbox" checked/><div class="t-track"></div><div class="t-thumb"></div></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><h4>Modo de prueba</h4><p>Usa datos simulados en lugar del modelo real</p></div>
+              <label class="toggle"><input type="checkbox"/><div class="t-track"></div><div class="t-thumb"></div></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ACERCA ═══ -->
+    <div class="page" id="page-acerca">
+      <div class="two-col" style="align-items:start">
+        <div class="card">
+          <div class="card-header"><h2>Sobre el sistema</h2></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:14px;padding:16px;background:var(--primary-l);border-radius:10px;border:1px solid #bfdbfe">
+              <div style="width:48px;height:48px;border-radius:12px;background:var(--primary);display:grid;place-items:center;color:#fff;flex-shrink:0">
+                <i data-lucide="shield-check" style="width:24px;height:24px"></i>
+              </div>
+              <div>
+                <div style="font-family:var(--font2);font-size:17px;font-weight:700;color:var(--text)">DetectorFraude</div>
+                <div style="font-size:12px;color:var(--muted)">Prototipo académico · UNINPAHU · 2026</div>
+              </div>
+            </div>
+            <p style="font-size:13px;color:var(--muted);line-height:1.7">Sistema de detección de comprobantes electrónicos fraudulentos mediante análisis de texto extraído por OCR y aplicación de reglas de validación basadas en patrones. Desarrollado como proyecto de grado de Ingeniería de Software.</p>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <div class="meta-row"><span class="meta-lbl">Institución</span><span class="meta-val">UNINPAHU</span></div>
+              <div class="meta-row"><span class="meta-lbl">Motor OCR</span><span class="meta-val">Tesseract 5.x</span></div>
+              <div class="meta-row"><span class="meta-lbl">Procesamiento</span><span class="meta-val">OpenCV + Python</span></div>
+              <div class="meta-row"><span class="meta-lbl">Backend</span><span class="meta-val">Flask</span></div>
+              <div class="meta-row"><span class="meta-lbl">Base de datos</span><span class="meta-val">SQLite</span></div>
+              <div class="meta-row"><span class="meta-lbl">Docente</span><span class="meta-val">Dacarth Rafael Sarmiento Porto</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Equipo de desarrollo</h2></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--light);border-radius:9px;border:1px solid var(--border)">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:grid;place-items:center;font-size:14px;color:#fff;font-weight:700;flex-shrink:0">J</div>
+              <div><div style="font-size:13px;font-weight:600;color:var(--text)">Jeisson David Hernández Tibata</div><div style="font-size:11px;color:var(--muted)">Dataset · Evaluación · Métricas</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--light);border-radius:9px;border:1px solid var(--border)">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);display:grid;place-items:center;font-size:14px;color:#fff;font-weight:700;flex-shrink:0">M</div>
+              <div><div style="font-size:13px;font-weight:600;color:var(--text)">Mónica Juliana Robayo Moreno</div><div style="font-size:11px;color:var(--muted)">Backend · OCR · Reglas de detección</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--light);border-radius:9px;border:1px solid var(--border)">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ef4444);display:grid;place-items:center;font-size:14px;color:#fff;font-weight:700;flex-shrink:0">S</div>
+              <div><div style="font-size:13px;font-weight:600;color:var(--text)">Sol Angie Garcia Osorio</div><div style="font-size:11px;color:var(--muted)">Frontend · Integración · Documentación</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  // ── Navegación ────────────────────────────────────────────────────────────
+  const pageMeta = {
+    dashboard:     { title:'Panel de control',       sub:'Resumen general del sistema' },
+    analisis:      { title:'Analizar comprobante',   sub:'Carga y procesa un comprobante de pago' },
+    historial:     { title:'Historial de análisis',  sub:'Todos los comprobantes procesados' },
+    reportes:      { title:'Métricas y reportes',    sub:'Rendimiento del sistema y exportación' },
+    configuracion: { title:'Configuración',          sub:'Parámetros y reglas del sistema' },
+    acerca:        { title:'Acerca del sistema',     sub:'Información del proyecto y equipo' },
+  };
+
+  function nav(pageId, linkEl) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sb-link').forEach(l => l.classList.remove('active'));
+    const pg = document.getElementById('page-' + pageId);
+    if (pg) { pg.classList.add('active'); pg.classList.add('fade-in'); }
+    if (linkEl) linkEl.classList.add('active');
+    const m = pageMeta[pageId];
+    if (m) {
+      document.getElementById('page-title').textContent = m.title;
+      document.getElementById('page-sub').textContent   = m.sub;
+    }
+    if (pageId === 'historial') renderHistorial();
+    lucide.createIcons();
+  }
+
+  // ── Historial ─────────────────────────────────────────────────────────────
+  const histData = [
+    { id:1, file:'comprobante_001.png',  date:'24/03/2026 10:42', verdict:'fraud',   conf:91, idx:0.82 },
+    { id:2, file:'recibo_marzo_22.jpg',  date:'22/03/2026 14:15', verdict:'valid',   conf:96, idx:0.08 },
+    { id:3, file:'pago_transferencia.png',date:'20/03/2026 09:30',verdict:'suspect', conf:74, idx:0.52 },
+    { id:4, file:'transferencia_18.jpg', date:'18/03/2026 16:55', verdict:'valid',   conf:98, idx:0.04 },
+    { id:5, file:'comprobante_pse.png',  date:'16/03/2026 11:20', verdict:'fraud',   conf:88, idx:0.78 },
+    { id:6, file:'recibo_015.jpg',       date:'14/03/2026 08:45', verdict:'valid',   conf:95, idx:0.11 },
+    { id:7, file:'pago_bancol.png',      date:'12/03/2026 13:00', verdict:'valid',   conf:97, idx:0.06 },
+    { id:8, file:'comprobante_fake2.png',date:'10/03/2026 17:30', verdict:'fraud',   conf:93, idx:0.88 },
+  ];
+  const vPill = { valid:{p:'p-green',l:'Válido'}, fraud:{p:'p-red',l:'Fraudulento'}, suspect:{p:'p-amber',l:'Sospechoso'} };
+
+  function renderHistorial() {
+    document.getElementById('hist-body').innerHTML = histData.map(r => `
+      <tr>
+        <td style="color:var(--muted);font-size:11px">${r.id}</td>
+        <td style="font-weight:500">${r.file}</td>
+        <td style="color:var(--muted)">${r.date}</td>
+        <td><span class="pill ${vPill[r.verdict].p}"><span class="pill-dot"></span>${vPill[r.verdict].l}</span></td>
+        <td style="font-weight:600">${r.conf}%</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:4px;background:var(--border);border-radius:3px;overflow:hidden;min-width:60px">
+              <div style="height:100%;width:${r.idx*100}%;background:${r.idx>=.75?'var(--danger)':r.idx>=.4?'var(--warn)':'var(--success)'};border-radius:3px"></div>
+            </div>
+            <span style="font-size:11px;font-weight:600;color:var(--muted);width:28px">${r.idx.toFixed(2)}</span>
+          </div>
+        </td>
+        <td><button class="btn btn-ghost btn-sm">Ver</button></td>
+      </tr>`).join('');
+  }
+
+  
+  const dz = document.getElementById('drop-zone');
+  const fi = document.getElementById('file-input');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+  fi.addEventListener('change', () => { if(fi.files[0]) handleFile(fi.files[0]); });
+
+  function handleFile(f) {
+    if (!['image/jpeg','image/png'].includes(f.type)) { alert('Usa JPG o PNG.'); return; }
+    if (f.size > 5*1024*1024) { alert('Máximo 5 MB.'); return; }
+    const r = new FileReader();
+    r.onload = e => {
+      document.getElementById('prev-img').src = e.target.result;
+      document.getElementById('fi-name').textContent = f.name;
+      document.getElementById('fi-size').textContent = (f.size/1024).toFixed(1)+' KB';
+      document.getElementById('fi-type').textContent = f.type.split('/')[1].toUpperCase();
+      show('upload-card', false);
+      show('preview-card', true);
+      show('progress-card', false);
+      show('result-card', false);
+      lucide.createIcons();
+    };
+    r.readAsDataURL(f);
+  }
+
+  function runAnalysis() {
+    document.getElementById('btn-analyze').disabled = true;
+    show('preview-card', false);
+    show('progress-card', true);
+    lucide.createIcons();
+
+    const steps = [
+      {id:'ps1',lbl:'Preprocesando imagen...',pct:20},
+      {id:'ps2',lbl:'Extrayendo texto con OCR...',pct:42},
+      {id:'ps3',lbl:'Validando campos obligatorios...',pct:64},
+      {id:'ps4',lbl:'Analizando patrones de texto...',pct:84},
+      {id:'ps5',lbl:'Clasificando comprobante...',pct:100},
+    ];
+    let i = 0;
+    (function next() {
+      if (i >= steps.length) { setTimeout(showResult, 600); return; }
+      if (i > 0) {
+        const prev = document.getElementById(steps[i-1].id);
+        prev.className = 'ps done';
+        prev.querySelector('.ps-ico').innerHTML = '<i data-lucide="check-circle-2" style="width:14px;height:14px"></i>';
+        lucide.createIcons();
+      }
+      const cur = document.getElementById(steps[i].id);
+      cur.className = 'ps active';
+      cur.querySelector('.ps-ico').innerHTML = '<span class="spin"></span>';
+      document.getElementById('prog-fill').style.width = steps[i].pct+'%';
+      document.getElementById('prog-pct').textContent  = steps[i].pct+'%';
+      document.getElementById('prog-lbl').textContent  = steps[i].lbl;
+      i++; setTimeout(next, 900);
+    })();
+  }
+
+  function showResult() {
+    const last = document.getElementById('ps5');
+    last.className = 'ps done';
+    last.querySelector('.ps-ico').innerHTML = '<i data-lucide="check-circle-2" style="width:14px;height:14px"></i>';
+
+    show('progress-card', false);
+    show('result-card', true);
+    document.getElementById('result-card').classList.add('fade-in');
+
+    const demo = {
+      verdict:'fraud', conf:'87%',
+      inds:[
+        {s:'fail',icon:'building-2',l:'Entidad emisora',v:'No reconocida'},
+        {s:'fail',icon:'hash',       l:'NIT emisor',     v:'Formato inválido'},
+        {s:'ok',  icon:'calendar',   l:'Fecha emisión',  v:'Válida'},
+        {s:'fail',icon:'dollar-sign',l:'Valor en letras',v:'No coincide'},
+        {s:'ok',  icon:'receipt',    l:'Código transac.',v:'Presente'},
+        {s:'warn',icon:'tag',        l:'Nombre emisor',  v:'Incompleto'},
+      ],
+      ocr:`COMPROBANTE DE PAGO\nEntidad: BancoXYZ Digital S.A.\nNIT: 9001234567\nFecha: 15/03/2026\nCódigo: TRX-2026-003847\nValor: $250.000\nValor letras: DOSCIENTOS MIL PESOS\nCuenta: **** 7823`,
+    };
+
+    const vMap = {
+      valid:  {cls:'v-ok',     ico:'shield-check', t:'Comprobante verificado',  d:'No se detectaron anomalías. El comprobante parece auténtico.'},
+      fraud:  {cls:'v-fraud',  ico:'shield-x',     t:'Comprobante fraudulento', d:'Se detectaron múltiples anomalías que indican posible manipulación.'},
+      suspect:{cls:'v-suspect',ico:'shield-alert',  t:'Comprobante sospechoso',  d:'Se encontraron inconsistencias. Se recomienda revisión manual.'},
+    };
+    const v = vMap[demo.verdict];
+    document.getElementById('verdict-box').className = 'verdict '+v.cls;
+    document.getElementById('v-ico-el').setAttribute('data-lucide', v.ico);
+    document.getElementById('v-t').textContent = v.t;
+    document.getElementById('v-d').textContent = v.d;
+    document.getElementById('v-c').textContent = demo.conf;
+
+    document.getElementById('ind-grid').innerHTML = demo.inds.map(ind=>`
+      <div class="ind ${ind.s}">
+        <div class="ind-ico"><i data-lucide="${ind.icon}"></i></div>
+        <div><div class="ind-lbl">${ind.l}</div><div class="ind-val">${ind.v}</div></div>
+      </div>`).join('');
+
+    let ocr = demo.ocr
+      .replace('BancoXYZ Digital S.A.','<span class="hl-r">BancoXYZ Digital S.A.</span>')
+      .replace('9001234567','<span class="hl-r">9001234567</span>')
+      .replace('DOSCIENTOS MIL PESOS','<span class="hl-r">DOSCIENTOS MIL PESOS</span>')
+      .replace('15/03/2026','<span class="hl-g">15/03/2026</span>')
+      .replace('TRX-2026-003847','<span class="hl-g">TRX-2026-003847</span>');
+    document.getElementById('ocr-body').innerHTML = ocr.replace(/\n/g,'<br>');
+    document.getElementById('ocr-cnt').textContent = '8 campos detectados';
+    lucide.createIcons();
+  }
+
+  function resetUpload() {
+    show('upload-card', true);
+    show('preview-card', false);
+    show('progress-card', false);
+    show('result-card', false);
+    document.getElementById('btn-analyze').disabled = false;
+    document.getElementById('prog-fill').style.width = '0%';
+    document.getElementById('file-input').value = '';
+    ['ps1','ps2','ps3','ps4','ps5'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'ps';
+      el.querySelector('.ps-ico').innerHTML = '<i data-lucide="circle"></i>';
+    });
+    lucide.createIcons();
+  }
+
+  function show(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = v ? '' : 'none';
+  }
+</script>
+</body>
+</html>
