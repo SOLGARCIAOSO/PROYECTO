@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DetectorFraude · Tecno Shop</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<style>
+:root{
+  --bg:#f0f2f8;
+  --white:#fff;
+  --primary:#2563eb;
+  --success:#059669;
+  --danger:#dc2626;
+  --warn:#d97706;
+  --border:#e2e8f0;
+  --text:#0f172a;
+  --muted:#64748b;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+}
+
+
+.sidebar{
+  width:250px;
+  background:#0f172a;
+  color:#fff;
+  position:fixed;
+  height:100%;
+  padding:20px 10px;
+}
+
+.sb-link{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+  color:#cbd5e1;
+}
+.sb-link:hover{background:#1e293b;color:#fff}
+.sb-link.active{background:var(--primary);color:#fff}
+
+
+.main{
+  margin-left:250px;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+}
+
+
+.topbar{
+  background:#fff;
+  padding:15px 25px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+}
+
+
+.content{padding:20px}
+
+
+.btn{
+  padding:8px 14px;
+  border-radius:6px;
+  border:none;
+  cursor:pointer;
+  font-size:13px;
+}
+.btn-primary{
+  background:var(--primary);
+  color:#fff;
+}
+.btn-primary:hover{opacity:.9}
+.btn-ghost{
+  background:none;
+  border:1px solid var(--border);
+}
+
+
+.card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:10px;
+}
+.card-header{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  font-weight:600;
+}
+.card-body{padding:16px}
+
+
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:15px;
+}
+
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+}
+tr:hover{background:#f8fafc}
+
+.pill{
+  padding:3px 8px;
+  border-radius:20px;
+  font-size:11px;
+}
+.p-green{background:#dcfce7;color:var(--success)}
+.p-red{background:#fee2e2;color:var(--danger)}
+.p-amber{background:#fef3c7;color:var(--warn)}
+.p-blue{background:#dbeafe;color:var(--primary)}
+
+
+input,select{
+  padding:8px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  width:100%;
+}
+
+
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+
+<body>
+
+
+<aside class="sidebar">
+  <h2 style="margin-bottom:20px">DetectorFraude</h2>
+
+  <div class="sb-link active" onclick="nav('dashboard',this)">Dashboard</div>
+  <div class="sb-link" onclick="nav('analisis',this)">Analizar</div>
+  <div class="sb-link" onclick="nav('historial',this)">Historial</div>
+  <div class="sb-link" onclick="nav('reportes',this)">Reportes</div>
+  <div class="sb-link" onclick="nav('configuracion',this)">Configuración</div>
+</aside>
+
+
+<div class="main">
+
+  <div class="topbar">
+    <div>
+      <h3 id="page-title">Panel de control</h3>
+      <small id="page-sub">Resumen general</small>
+    </div>
+    <button class="btn btn-primary" onclick="nav('analisis')">Nuevo análisis</button>
+  </div>
+
+  <div class="content">
+
+   
+    <div class="page active" id="page-dashboard">
+
+      <div class="stats-grid">
+        <div class="card"><div class="card-body">Total: 127</div></div>
+        <div class="card"><div class="card-body">Válidos: 98</div></div>
+        <div class="card"><div class="card-body">Fraude: 21</div></div>
+        <div class="card"><div class="card-body">Sospechosos: 8</div></div>
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-header">Análisis recientes</div>
+        <div class="card-body">
+          <table>
+            <tr><th>Archivo</th><th>Resultado</th></tr>
+            <tr><td>comprobante.png</td><td><span class="pill p-red">Fraude</span></td></tr>
+            <tr><td>recibo.jpg</td><td><span class="pill p-green">Válido</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+   
+    <div class="page" id="page-analisis">
+      <div class="card">
+        <div class="card-header">Subir comprobante</div>
+        <div class="card-body">
+          <input type="file"/>
+          <br><br>
+          <button class="btn btn-primary">Analizar</button>
+        </div>
+      </div>
+    </div>
+
+  
+    <div class="page" id="page-historial">
+      <div class="card">
+        <div class="card-header">Historial</div>
+        <div class="card-body">Contenido...</div>
+      </div>
+    </div>
+
+   
+    <div class="page" id="page-reportes">
+      <div class="card">
+        <div class="card-header">Reportes</div>
+        <div class="card-body">Contenido...</div>
+      </div>
+    </div>
+
+   
+    <div class="page" id="page-configuracion">
+      <div class="card">
+        <div class="card-header">Configuración</div>
+        <div class="card-body">Contenido...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function nav(pageId, el){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById('page-'+pageId).style.display='block';
+
+  document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+</script>
+
+</body>
+</html>
