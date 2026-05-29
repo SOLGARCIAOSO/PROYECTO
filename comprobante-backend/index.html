@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayLens — Detector de Comprobantes</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="paylens.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">PAY<span>LENS</span></div>
+  <div class="status-dot">
+    <span class="dot" id="api-dot" style="background:var(--text2)"></span>
+    <span id="api-status">Verificando API...</span>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showPage('analizar', this)">⬡ Analizar</div>
+  <div class="tab" onclick="showPage('historial', this)">◈ Historial</div>
+  <div class="tab" onclick="showPage('plantillas', this)">◻ Plantillas</div>
+</nav>
+
+<main>
+
+  <!-- ANALIZAR -->
+  <div class="page active" id="page-analizar">
+    <div class="analizar-grid">
+
+      <div class="card">
+        <div class="card-title">Cargar comprobante</div>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="file-input" accept="image/jpeg,image/png">
+          <span class="drop-icon">📄</span>
+          <div class="drop-label">
+            Arrastra tu comprobante aquí<br>
+            o <strong>haz clic para seleccionar</strong><br>
+            <small>JPG, PNG · máx 10 MB</small>
+          </div>
+        </div>
+        <img id="preview-img" alt="Vista previa">
+      </div>
+
+      <div class="card">
+        <div class="card-title">Opciones de análisis</div>
+        <div class="field">
+          <label>Plantilla de referencia (opcional)</label>
+          <select id="plantilla-select">
+            <option value="">Sin plantilla — análisis interno</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Archivo seleccionado</label>
+          <input type="text" id="file-name" value="Ninguno" readonly style="color:var(--text2)">
+        </div>
+        <button class="btn-primary" id="btn-analizar" disabled onclick="analizarComprobante()">
+          ▶ INICIAR ANÁLISIS
+        </button>
+        <div style="margin-top:1rem; font-size:0.78rem; color:var(--text2); line-height:1.6;">
+          El sistema aplicará OCR + OpenCV para detectar alteraciones, validar campos colombianos y clasificar el comprobante.
+        </div>
+      </div>
+
+      <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Analizando comprobante...</div>
+        <div class="loader-steps" id="loader-steps"></div>
+      </div>
+
+      <div id="resultado">
+
+        <div class="veredicto-banner" id="v-banner">
+          <div class="veredicto-icon" id="v-icon"></div>
+          <div class="veredicto-info">
+            <div class="veredicto-label" id="v-label"></div>
+            <div class="veredicto-sub" id="v-sub"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+            <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text2);text-align:right;">
+              ID análisis<br>
+              <span id="v-id" style="color:var(--accent);font-size:1rem;">#—</span>
+            </div>
+            <button class="btn-secondary" onclick="preguntarAlAsistente()" id="btn-explicar" style="font-size:0.7rem;padding:0.35rem 0.8rem;">
+              🤖 Explicar resultado
+            </button>
+          </div>
+        </div>
+
+        <div class="metricas-row">
+          <div class="metrica"><div class="metrica-val" id="m-sospecha">—</div><div class="metrica-label">Índice sospecha</div></div>
+          <div class="metrica"><div class="metrica-val" id="m-confianza">—</div><div class="metrica-label">Confianza</div></div>
+          <div class="metrica"><div class="metrica-val" id="m-ocr">—</div><div class="metrica-label">Calidad OCR</div></div>
+        </div>
+
+        <div class="sospecha-bar-wrap">
+          <div class="sospecha-bar-label"><span>Índice de sospecha</span><span id="bar-pct">0%</span></div>
+          <div class="sospecha-bar"><div class="sospecha-fill" id="sospecha-fill" style="width:0%"></div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="card" style="padding:1.2rem;">
+            <div class="card-title">Campos detectados (OCR)</div>
+            <div class="campos-grid" id="campos-grid"></div>
+          </div>
+          <div class="card" style="padding:1.2rem;">
+            <div class="card-title">Indicadores activados</div>
+            <div class="indicadores-list" id="indicadores-list"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:1rem;text-align:right;">
+          <button class="btn-secondary" onclick="resetAnalisis()">← Nuevo análisis</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="page" id="page-historial">
+    <div class="historial-header">
+      <div class="historial-title">◈ Historial de análisis</div>
+      <div class="export-btns">
+        <button class="btn-secondary" onclick="exportar('csv')">↓ CSV</button>
+        <button class="btn-secondary" onclick="exportar('pdf')">↓ PDF</button>
+        <button class="btn-secondary" onclick="cargarHistorial()">↺ Actualizar</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Archivo</th><th>Fecha</th><th>Veredicto</th><th>Sospecha</th><th>Confianza</th><th></th></tr>
+        </thead>
+        <tbody id="historial-body">
+          <tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text2);">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PLANTILLAS -->
+  <div class="page" id="page-plantillas">
+    <div class="historial-header">
+      <div class="historial-title">◻ Plantillas de referencia</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+      <div class="card">
+        <div class="card-title">Subir plantilla</div>
+        <div class="dropzone" id="dropzone-plantilla">
+          <input type="file" id="plantilla-file" accept="image/jpeg,image/png">
+          <span class="drop-icon">🗂️</span>
+          <div class="drop-label">Imagen original legítima<br><strong>JPG o PNG</strong></div>
+        </div>
+        <div class="field" style="margin-top:1rem;">
+          <label>Nombre de la plantilla</label>
+          <input type="text" id="plantilla-nombre" placeholder="ej: bancolombia">
+        </div>
+        <button class="btn-primary" onclick="subirPlantilla()">↑ GUARDAR PLANTILLA</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Plantillas disponibles</div>
+        <div id="plantillas-list" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══ CHATBOT FAB ══ -->
+<button id="chat-fab" onclick="toggleChat()" title="Asistente de auditoría IA">
+  🤖
+  <span class="chat-badge" id="chat-badge">1</span>
+</button>
+
+<!-- ══ CHAT PANEL ══ -->
+<div id="chat-panel">
+  <div class="chat-header">
+    <div class="chat-avatar">🛡️</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">FraudShield AI</div>
+      <div class="chat-header-sub">Asistente de auditoría de comprobantes</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+
+  <!-- Vista: API key (oculta - no se necesita) -->
+  <div id="chat-apikey-view" style="display:none;"></div>
+
+  <!-- Vista: chat -->
+  <div id="chat-main-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <div class="chat-suggestions" id="chat-suggestions">
+      <button class="sugg-btn" onclick="enviarSugerencia(this)">¿Qué campos verificar?</button>
+      <button class="sugg-btn" onclick="enviarSugerencia(this)">¿Cómo detectar fraude?</button>
+      <button class="sugg-btn" onclick="enviarSugerencia(this)">¿Qué es el NIT?</button>
+    </div>
+
+    <div class="chat-input-row">
+      <textarea id="chat-input" placeholder="Pregunta sobre el resultado o fraude en general..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensaje();}"></textarea>
+      <button id="chat-send" onclick="enviarMensaje()">➤</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = 'http://localhost:8000';
+let ultimoResultado = null;
+let chatHistorial = [];
+
+// ── Base de conocimiento ──────────────────────────────────
+const KNOWLEDGE = {
+  campos: `En Colombia, una factura electrónica válida según la DIAN debe contener:\n\n• **NIT del emisor**: Formato XXXXXXXXX-X (ej: 900123456-7). Identifica al emisor ante la DIAN.\n• **Fecha de emisión**: Formato DD/MM/AAAA o AAAA-MM-DD. No puede ser futura.\n• **Valor total**: Numérico, mayor a cero, debe coincidir con el valor en letras si aparece.\n• **Nombre del emisor**: Razón social registrada ante la DIAN.\n• **Código de transacción**: Referencia única trazable. Su ausencia es señal de alerta.\n\nNormativa: Resolución 000042 de 2020 y Decreto 358 de 2020 de la DIAN.`,
+  fraude: `Patrones comunes de fraude en comprobantes colombianos:\n\n• **Alteración de valores**: Edición de imagen para cambiar cifras. Detectado con SSIM comparando píxeles contra plantilla original.\n• **Fechas falsas o futuras**: Fechas que no corresponden a la operación real.\n• **Emisores desconocidos**: Entidades que no figuran en el registro DIAN ni en pasarelas autorizadas.\n• **Imagen borrosa intencional**: Para dificultar la lectura OCR y ocultar alteraciones.\n• **NIT inválido**: Números que no cumplen el formato DIAN o de empresas inexistentes.\n• **Sin código de transacción**: Todo comprobante auténtico tiene referencia única trazable.`,
+  ssim: `El SSIM (Structural Similarity Index) mide la similitud estructural entre dos imágenes comparando luminancia, contraste y estructura.\n\nEn FraudShield se compara el comprobante contra una plantilla de referencia:\n• **SSIM > 0.95**: Alta similitud — comprobante probablemente auténtico\n• **SSIM 0.80-0.95**: Diferencias moderadas — requiere revisión manual\n• **SSIM < 0.80**: Alteraciones significativas — probable fraude\n\nLas zonas con diferencias se marcan para que el auditor identifique exactamente qué fue modificado.`,
+  nit: `El NIT (Número de Identificación Tributaria) es el identificador fiscal de personas jurídicas en Colombia, asignado por la DIAN.\n\n**Formato válido**: 7-10 dígitos + dígito de verificación (ej: 900123456-7).\n\nPuedes verificar un NIT en:\n• Portal DIAN: muisca.dian.gov.co\n• Consulta RUT en línea\n\nNIT ausente o con formato incorrecto es señal crítica de fraude, ya que todos los emisores legales deben tenerlo registrado.`,
+  ocr: `El OCR (Reconocimiento Óptico de Caracteres) extrae el texto de la imagen del comprobante.\n\n**Calidad OCR** (0-100%):\n• **> 70%**: Buena calidad, campos detectados con alta precisión\n• **40-70%**: Calidad media, algunos campos pueden fallar\n• **< 40%**: Calidad baja — posible imagen borrosa intencional para evadir detección\n\nFraudShield usa Tesseract OCR con preprocesamiento (escala de grises + umbralización adaptativa) para maximizar la precisión.`,
+  dian: `La DIAN regula la facturación electrónica en Colombia.\n\n**Normativa clave:**\n• Resolución 000042 de 2020: Sistema de facturación electrónica\n• Decreto 358 de 2020: Documentos equivalentes\n• Los comprobantes deben tener CUFE (Código Único de Factura Electrónica)\n\n**Pasarelas autorizadas:** PSE, PayU, ePayco, Wompi, Redeban, Credibanco, Bancolombia, Davivienda, Nequi, Daviplata.`
+};
+
+function generarRespuestaSimulada(pregunta) {
+  const p = pregunta.toLowerCase();
+
+  if (ultimoResultado && (p.includes('por qué') || p.includes('porque') || p.includes('explica') || p.includes('resultado') || p.includes('clasificado') || p.includes('marcado') || p.includes('veredicto'))) {
+    const r = ultimoResultado;
+    const campos = r.campos_detectados || {};
+    const indicadores = r.indicadores || [];
+    const ausentes = [];
+    if (!campos.nit) ausentes.push('NIT');
+    if (!campos.fecha) ausentes.push('fecha');
+    if (!campos.valor_total) ausentes.push('valor total');
+    if (!campos.nombre_emisor) ausentes.push('nombre del emisor');
+    if (!campos.codigo_transaccion) ausentes.push('código de transacción');
+
+    if (r.veredicto === 'Verificado') {
+      return `✅ El comprobante fue clasificado como **Verificado** con índice de sospecha de ${r.indice_sospecha}% y confianza del ${r.confianza_result}%.\n\nEl sistema no detectó alteraciones visuales significativas y los campos obligatorios se encontraron en formatos válidos según la DIAN.\n\nCalidad OCR: ${r.confianza_ocr}% — la imagen tenía buena legibilidad para extraer los campos con precisión.`;
+    } else {
+      let resp = `⚠️ Clasificado como **${r.veredicto}** — índice de sospecha: ${r.indice_sospecha}%.\n\n`;
+      if (ausentes.length > 0) resp += `**Campos no detectados**: ${ausentes.join(', ')}. Todo comprobante colombiano válido debe incluirlos según la Resolución 000042 de 2020 de la DIAN.\n\n`;
+      const criticos = indicadores.filter(i => i.es_critico);
+      if (criticos.length > 0) resp += `**Indicadores críticos**:\n${criticos.map(i => '• ' + i.descripcion).join('\n')}\n\n`;
+      if (r.confianza_ocr < 40) resp += `**Calidad OCR baja** (${r.confianza_ocr}%): Imagen de poca legibilidad, posiblemente intencional.\n\n`;
+      resp += `**Recomendación**: Verificar el NIT en muisca.dian.gov.co y solicitar el comprobante original al emisor.`;
+      return resp;
+    }
+  }
+
+  if (p.includes('campo') || p.includes('verificar') || p.includes('obligatorio') || p.includes('factura') || p.includes('contener')) return KNOWLEDGE.campos;
+  if (p.includes('fraude') || p.includes('falso') || p.includes('detectar') || p.includes('patr') || p.includes('alter')) return KNOWLEDGE.fraude;
+  if (p.includes('ssim') || p.includes('similitud') || p.includes('visual') || p.includes('opencv') || p.includes('imagen')) return KNOWLEDGE.ssim;
+  if (p.includes('nit') || p.includes('tributar') || p.includes('identif') || p.includes('rut')) return KNOWLEDGE.nit;
+  if (p.includes('ocr') || p.includes('calidad') || p.includes('texto') || p.includes('legib') || p.includes('tesseract')) return KNOWLEDGE.ocr;
+  if (p.includes('dian') || p.includes('normativa') || p.includes('ley') || p.includes('resoluc') || p.includes('cufe') || p.includes('pasarela')) return KNOWLEDGE.dian;
+  if (p.includes('hola') || p.includes('buenas') || p.includes('hey') || p.includes('buenos')) return 'Hola 👋 Soy FraudShield AI. Puedo ayudarte con:\n\n• Interpretación del resultado del análisis\n• Campos obligatorios en facturas colombianas\n• Patrones de fraude comunes\n• Normativa DIAN\n• Métricas del sistema (SSIM, OCR, índice de sospecha)\n\n¿Sobre qué quieres saber?';
+  if (p.includes('gracias') || p.includes('thanks') || p.includes('listo')) return '¡Con gusto! 😊 Si tienes más preguntas sobre el análisis o fraude en comprobantes colombianos, aquí estoy.';
+
+  return `Como asistente de auditoría FraudShield puedo ayudarte con:\n\n• **Resultados**: Explicación detallada de por qué un comprobante fue marcado\n• **Campos DIAN**: NIT, fecha, valor total, emisor, código de transacción\n• **Detección de fraude**: Patrones visuales, OCR, alteraciones\n• **Normativa**: Resolución 000042/2020, CUFE, pasarelas autorizadas\n\nPuedes preguntarme sobre cualquiera de estos temas o analizar un comprobante y usar el botón "Explicar resultado".`;
+}
+
+// ── Init chat ─────────────────────────────────────────────
+function initChat() {
+  document.getElementById('chat-apikey-view').style.display = 'none';
+  document.getElementById('chat-main-view').style.display = 'flex';
+  if (chatHistorial.length === 0) {
+    agregarMsgBot('Hola 👋 Soy FraudShield AI, tu asistente de auditoría. Puedo explicarte resultados de análisis, patrones de fraude en comprobantes colombianos y normativa DIAN. ¿En qué te ayudo?');
+  }
+}
+
+// ── Toggle panel ──────────────────────────────────────────
+function toggleChat() {
+  const panel = document.getElementById('chat-panel');
+  const badge = document.getElementById('chat-badge');
+  panel.classList.toggle('open');
+  badge.style.display = 'none';
+  if (panel.classList.contains('open') && chatHistorial.length === 0) initChat();
+}
+
+// ── Mensajes ──────────────────────────────────────────────
+function agregarMsgBot(texto) {
+  const el = document.createElement('div');
+  el.className = 'chat-msg bot';
+  el.innerHTML = texto.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  document.getElementById('chat-messages').appendChild(el);
+  scrollChat();
+}
+
+function agregarMsgUser(texto) {
+  const el = document.createElement('div');
+  el.className = 'chat-msg user';
+  el.textContent = texto;
+  document.getElementById('chat-messages').appendChild(el);
+  scrollChat();
+}
+
+function agregarTyping() {
+  const el = document.createElement('div');
+  el.className = 'chat-msg typing';
+  el.id = 'typing-indicator';
+  el.textContent = 'Analizando...';
+  document.getElementById('chat-messages').appendChild(el);
+  scrollChat();
+  return el;
+}
+
+function scrollChat() {
+  const msgs = document.getElementById('chat-messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── Enviar mensaje ────────────────────────────────────────
+async function enviarMensaje() {
+  const input = document.getElementById('chat-input');
+  const texto = input.value.trim();
+  if (!texto) return;
+  input.value = '';
+  agregarMsgUser(texto);
+  document.getElementById('chat-suggestions').style.display = 'none';
+  const typing = agregarTyping();
+  document.getElementById('chat-send').disabled = true;
+  await new Promise(r => setTimeout(r, 800 + Math.random() * 500));
+  typing.remove();
+  const respuesta = generarRespuestaSimulada(texto);
+  chatHistorial.push({ role: 'user', content: texto });
+  chatHistorial.push({ role: 'assistant', content: respuesta });
+  agregarMsgBot(respuesta);
+  document.getElementById('chat-send').disabled = false;
+}
+
+function enviarSugerencia(btn) {
+  document.getElementById('chat-input').value = btn.textContent;
+  enviarMensaje();
+}
+
+// ── Botón "Explicar resultado" ────────────────────────────
+function preguntarAlAsistente() {
+  if (!ultimoResultado) return;
+  const panel = document.getElementById('chat-panel');
+  if (!panel.classList.contains('open')) toggleChat();
+  setTimeout(() => {
+    document.getElementById('chat-input').value = `Explícame por qué este comprobante fue clasificado como "${ultimoResultado.veredicto}"`;
+    enviarMensaje();
+  }, 300);
+}
+
+// ── Verificar API ──────────────────────────────────────────
+async function checkAPI() {
+  try {
+    const r = await fetch(`${API}/salud`);
+    if (r.ok) {
+      document.getElementById('api-dot').style.background = 'var(--accent)';
+      document.getElementById('api-status').textContent = 'API conectada';
+    } else throw new Error();
+  } catch {
+    document.getElementById('api-dot').style.background = 'var(--danger)';
+    document.getElementById('api-status').textContent = 'API desconectada';
+  }
+}
+
+// ── Tabs ──────────────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'historial') cargarHistorial();
+  if (id === 'plantillas') cargarPlantillas();
+}
+
+// ── Archivo ───────────────────────────────────────────────
+const fileInput = document.getElementById('file-input');
+const dropzone  = document.getElementById('dropzone');
+
+fileInput.addEventListener('change', () => {
+  const f = fileInput.files[0];
+  if (!f) return;
+  document.getElementById('file-name').value = f.name;
+  document.getElementById('btn-analizar').disabled = false;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('preview-img');
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(f);
+});
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('over');
+  fileInput.files = e.dataTransfer.files;
+  fileInput.dispatchEvent(new Event('change'));
+});
+
+// ── Analizar ──────────────────────────────────────────────
+async function analizarComprobante() {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  document.getElementById('resultado').style.display = 'none';
+  document.getElementById('loader').classList.add('active');
+  document.getElementById('btn-analizar').disabled = true;
+
+  const pasos = ['CU1: Validando archivo...','CU2: Extrayendo texto con OCR...','CU3: Validando campos colombianos...','CU4: Analizando con OpenCV...','CU5: Clasificando comprobante...'];
+  let i = 0;
+  const stepEl = document.getElementById('loader-steps');
+  const interval = setInterval(() => { if (i < pasos.length) stepEl.textContent = pasos[i++]; }, 800);
+
+  try {
+    const fd = new FormData();
+    fd.append('archivo', file);
+    const plantilla = document.getElementById('plantilla-select').value;
+    if (plantilla) fd.append('plantilla', plantilla);
+
+    const r = await fetch(`${API}/comprobante/analizar`, { method: 'POST', body: fd });
+    const data = await r.json();
+    clearInterval(interval);
+
+    if (!r.ok) { toast(data.detail || 'Error al analizar', 'error'); return; }
+
+    ultimoResultado = data;
+    mostrarResultado(data);
+
+    // Notificación en chat
+    const badge = document.getElementById('chat-badge');
+    badge.style.display = 'flex';
+
+  } catch(e) {
+    clearInterval(interval);
+    toast('No se pudo conectar con la API. ¿Está corriendo el servidor?', 'error');
+  } finally {
+    document.getElementById('loader').classList.remove('active');
+    document.getElementById('btn-analizar').disabled = false;
+  }
+}
+
+function mostrarResultado(data) {
+  const el = document.getElementById('resultado');
+  el.style.display = 'block';
+
+  const v = data.veredicto;
+  const vKey = v.toLowerCase().replace(' ', '');
+
+  const iconos = { 'Verificado': '✅', 'Sospechoso': '⚠️', 'Fraudulento': '🚨', 'No determinado': '❓' };
+  const subs = {
+    'Verificado':     'El comprobante parece auténtico',
+    'Sospechoso':     'Se detectaron anomalías que requieren revisión manual',
+    'Fraudulento':    'Se detectaron alteraciones significativas en el comprobante',
+    'No determinado': 'No se pudo determinar la autenticidad por baja calidad de imagen'
+  };
+
+  document.getElementById('v-banner').className = `veredicto-banner ${vKey}`;
+  document.getElementById('v-icon').textContent = iconos[v] || '❓';
+  document.getElementById('v-label').className = `veredicto-label ${vKey}`;
+  document.getElementById('v-label').textContent = v.toUpperCase();
+  document.getElementById('v-sub').textContent = subs[v] || '';
+  document.getElementById('v-id').textContent = `#${data.id}`;
+
+  document.getElementById('m-sospecha').textContent = `${data.indice_sospecha.toFixed(1)}%`;
+  document.getElementById('m-confianza').textContent = `${data.confianza_result.toFixed(1)}%`;
+  document.getElementById('m-ocr').textContent = `${data.confianza_ocr.toFixed(1)}%`;
+
+  setTimeout(() => {
+    document.getElementById('sospecha-fill').style.width = `${data.indice_sospecha}%`;
+    document.getElementById('bar-pct').textContent = `${data.indice_sospecha.toFixed(1)}%`;
+  }, 100);
+
+  const campos = data.campos_detectados || {};
+  const camposEl = document.getElementById('campos-grid');
+  camposEl.innerHTML = '';
+  const camposNombres = { nit:'NIT', fecha:'Fecha', valor_total:'Valor total', nombre_emisor:'Emisor', codigo_transaccion:'Código transacción', valor_letras:'Valor en letras' };
+  for (const [k, nombre] of Object.entries(camposNombres)) {
+    const val = campos[k];
+    camposEl.innerHTML += `<div class="campo-item"><div class="campo-key">${nombre}</div><div class="campo-val ${val?'':'empty'}">${val||'No detectado'}</div></div>`;
+  }
+
+  const indEl = document.getElementById('indicadores-list');
+  indEl.innerHTML = '';
+  if (data.indicadores && data.indicadores.length > 0) {
+    data.indicadores.forEach(ind => {
+      indEl.innerHTML += `<div class="indicador-item ${ind.es_critico?'critico':''}">
+        <span class="indicador-badge ${ind.es_critico?'badge-critico':'badge-normal'}">${ind.es_critico?'⚠ CRÍTICO':`peso ${ind.peso}`}</span>
+        <span class="indicador-desc">${ind.descripcion}</span>
+      </div>`;
+    });
+  } else {
+    indEl.innerHTML = `<div style="color:var(--accent);font-size:0.85rem;padding:0.5rem 0;">✓ Sin anomalías detectadas</div>`;
+  }
+
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetAnalisis() {
+  document.getElementById('resultado').style.display = 'none';
+  document.getElementById('preview-img').style.display = 'none';
+  document.getElementById('file-name').value = 'Ninguno';
+  document.getElementById('btn-analizar').disabled = true;
+  fileInput.value = '';
+  ultimoResultado = null;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Historial ─────────────────────────────────────────────
+async function cargarHistorial() {
+  const tbody = document.getElementById('historial-body');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text2);">Cargando...</td></tr>';
+  try {
+    const r = await fetch(`${API}/historial/?limit=100`);
+    const data = await r.json();
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text2);">Sin análisis registrados aún</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(a => {
+      const vk = a.veredicto.toLowerCase().replace(' ','');
+      const fecha = new Date(a.fecha_analisis).toLocaleString('es-CO');
+      return `<tr>
+        <td style="font-family:var(--mono);color:var(--accent)">#${a.id}</td>
+        <td style="color:var(--text)">${a.nombre_archivo}</td>
+        <td>${fecha}</td>
+        <td><span class="badge-veredicto bv-${vk}">${a.veredicto}</span></td>
+        <td style="font-family:var(--mono)">${a.indice_sospecha.toFixed(1)}%</td>
+        <td style="font-family:var(--mono)">${a.confianza_result.toFixed(1)}%</td>
+        <td><button class="btn-secondary" onclick="eliminarAnalisis(${a.id})">✕</button></td>
+      </tr>`;
+    }).join('');
+  } catch {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--danger);">Error al conectar con la API</td></tr>';
+  }
+}
+
+async function eliminarAnalisis(id) {
+  if (!confirm(`¿Eliminar análisis #${id}?`)) return;
+  try {
+    await fetch(`${API}/historial/${id}`, { method: 'DELETE' });
+    toast(`Análisis #${id} eliminado`, 'success');
+    cargarHistorial();
+  } catch { toast('Error al eliminar', 'error'); }
+}
+
+async function exportar(formato) {
+  try {
+    const r = await fetch(`${API}/exportar/?formato=${formato}`);
+    if (!r.ok) { toast('Sin registros para exportar', 'error'); return; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `reporte.${formato}`; a.click();
+    toast(`Reporte ${formato.toUpperCase()} descargado`, 'success');
+  } catch { toast('Error al exportar', 'error'); }
+}
+
+// ── Plantillas ────────────────────────────────────────────
+async function cargarPlantillas() {
+  try {
+    const r = await fetch(`${API}/comprobante/plantillas`);
+    const data = await r.json();
+    const list = document.getElementById('plantillas-list');
+    const sel  = document.getElementById('plantilla-select');
+    sel.innerHTML = '<option value="">Sin plantilla — análisis interno</option>';
+    if (!data.plantillas || !data.plantillas.length) {
+      list.innerHTML = '<div style="color:var(--text2);font-size:0.85rem;padding:1rem 0;">No hay plantillas guardadas aún.</div>';
+      return;
+    }
+    list.innerHTML = data.plantillas.map(p => `
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0.7rem 1rem;font-size:0.85rem;">
+        <span style="font-family:var(--mono);color:var(--accent)">📎 ${p}</span>
+      </div>`).join('');
+    data.plantillas.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  } catch {}
+}
+
+async function subirPlantilla() {
+  const file   = document.getElementById('plantilla-file').files[0];
+  const nombre = document.getElementById('plantilla-nombre').value.trim();
+  if (!file) { toast('Selecciona una imagen', 'error'); return; }
+  const fd = new FormData();
+  fd.append('archivo', file);
+  if (nombre) fd.append('nombre', nombre);
+  try {
+    const r = await fetch(`${API}/comprobante/plantillas`, { method: 'POST', body: fd });
+    if (r.ok) { toast('Plantilla guardada correctamente', 'success'); cargarPlantillas(); }
+    else toast('Error al guardar plantilla', 'error');
+  } catch { toast('Error de conexión', 'error'); }
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function toast(msg, tipo = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${tipo}`;
+  setTimeout(() => el.className = '', 3000);
+}
+
+// ── Verificar sesión ─────────────────────────────────────
+const usuarioLogueado = sessionStorage.getItem('fraudshield_user');
+if (!usuarioLogueado) window.location.href = 'http://localhost:5000';
+
+// ── Init ─────────────────────────────────────────────────
+checkAPI();
+setInterval(checkAPI, 10000);
+cargarPlantillas();
+</script>
+</body>
+</html>

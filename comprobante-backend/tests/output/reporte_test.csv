@@ -1,0 +1,4 @@
+﻿ID,Archivo,Fecha análisis,Veredicto,Índice sospecha (%),Confianza (%),Confianza OCR (%),Indicadores
+1,comprobante_real.jpg,2026-03-23 20:20:14,Verificado,5.0,97.0,85.0,NIT ausente | Entidad desconocida
+2,comprobante_editado.jpg,2026-03-23 20:20:14,Fraudulento,75.0,87.5,85.0,NIT ausente | Entidad desconocida
+3,comprobante_scan.jpg,2026-03-23 20:20:14,Sospechoso,40.0,55.0,85.0,NIT ausente | Entidad desconocida

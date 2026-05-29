@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudShield — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="login-wrapper">
+
+  <div class="logo">FRAUD<span>SHIELD</span></div>
+  <div class="logo-sub">⬡ Sistema de autenticación segura</div>
+
+  <div class="card">
+    <div class="card-title">Acceso al sistema</div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login', this)">Iniciar sesión</div>
+      <div class="tab" onclick="switchTab('register', this)">Registrarse</div>
+    </div>
+
+    <!-- Login -->
+    <div class="form-section active" id="form-login">
+      <div class="field">
+        <label>Usuario</label>
+        <input type="text" id="login-user" placeholder="tu_usuario">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" onclick="loginUser()">▶ ENTRAR</button>
+    </div>
+
+    <!-- Registro -->
+    <div class="form-section" id="form-register">
+      <div class="field">
+        <label>Usuario</label>
+        <input type="text" id="reg-user" placeholder="nuevo_usuario">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="reg-pass" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" onclick="registerUser()">✦ CREAR CUENTA</button>
+    </div>
+
+    <div id="mensaje"></div>
+  </div>
+
+  <div class="footer-note">
+    <span class="dot"></span>Conexión segura · FraudShield v1.0
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
